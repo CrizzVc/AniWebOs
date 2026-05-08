@@ -138,6 +138,36 @@ app.get('/api/anime-details', async (req, res) => {
     }
 });
 
+app.get('/api/search', async (req, res) => {
+    const query = req.query.q;
+    if (!query) return res.status(400).json({ error: "Missing 'q' parameter" });
+
+    try {
+        const response = await axios.get(`https://www4.animeflv.net/browse?q=${encodeURIComponent(query)}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+
+        const $ = cheerio.load(response.data);
+        const results = [];
+
+        $('.ListAnimes li article').each((i, el) => {
+            // AnimeFLV has the title in an <h3> with class Title
+            const title = $(el).find('h3.Title').text().trim();
+            const urlPath = $(el).find('a').attr('href');
+            const url = 'https://www4.animeflv.net' + urlPath;
+            let image = $(el).find('img').attr('src');
+            if (image && image.startsWith('/')) image = 'https://www4.animeflv.net' + image;
+
+            results.push({ title, url, image });
+        });
+
+        return res.json({ success: true, data: results });
+    } catch (error) {
+        console.error("Error in search:", error.message);
+        return res.status(500).json({ error: "Failed to search anime." });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`AnimeFLV Scraper Backend running at http://localhost:${PORT}`);
 });

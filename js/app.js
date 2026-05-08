@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         ACTION_MODAL: 'ACTION_MODAL',
         DETAILS: 'DETAILS',
         SERVER_MODAL: 'SERVER_MODAL',
-        PLAYER: 'PLAYER'
+        PLAYER: 'PLAYER',
+        SEARCH: 'SEARCH'
     };
     let currentState = STATES.CAROUSEL;
 
@@ -16,6 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const heroBg = document.getElementById('hero-bg');
     const heroTitle = document.getElementById('hero-title');
     const heroSubtitle = document.getElementById('hero-subtitle');
+    
+    // Header Elements
+    const searchBtn = document.getElementById('btn-search');
     
     // Action Modal Elements
     const actionModal = document.getElementById('action-modal');
@@ -33,6 +37,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const serverModal = document.getElementById('server-modal');
     const serverButtonsContainer = document.getElementById('server-buttons');
 
+    // Search Elements
+    const searchView = document.getElementById('search-view');
+    const searchInput = document.getElementById('search-input');
+    const searchResultsContainer = document.getElementById('search-results');
+
     // Player Elements
     const playerOverlay = document.getElementById('player-overlay');
     const videoFrame = document.getElementById('video-frame');
@@ -41,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Data & Navigation State
     let episodesData = [];
     let carouselIdx = 0;
+    let isHeaderFocused = false; // To track if we are in search button
     
     let actionModalIdx = 0; // 0 = Reproducir, 1 = Mas Episodios
     let targetEpisodeUrl = ""; // Used to track which episode to play or fetch details for
@@ -50,6 +60,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     let serverButtons = [];
     let serverIdx = 0;
+
+    let searchResultsData = [];
+    let searchGridIdx = 0;
 
     // Initialize clock
     setInterval(() => {
@@ -115,20 +128,108 @@ document.addEventListener('DOMContentLoaded', async () => {
             heroTitle.innerText = ep.title;
             heroSubtitle.innerText = ep.episode;
         }
+        
+        isHeaderFocused = false;
+        searchBtn.classList.remove('focused');
+    }
+
+    function focusHeader() {
+        isHeaderFocused = true;
+        document.querySelectorAll('#carousel .card').forEach(el => el.classList.remove('focused'));
+        searchBtn.classList.add('focused');
+    }
+
+    // --- SEARCH ---
+    function openSearchView() {
+        currentState = STATES.SEARCH;
+        searchView.classList.remove('hidden');
+        searchResultsContainer.innerHTML = '';
+        searchResultsData = [];
+        searchInput.value = '';
+        searchInput.focus(); // Opens virtual keyboard on webOS
+    }
+
+    function closeSearchView() {
+        searchView.classList.add('hidden');
+        currentState = STATES.CAROUSEL;
+        focusHeader();
+    }
+
+    async function performSearch(query) {
+        if (!query) return;
+        statusElement.innerText = `Buscando "${query}"...`;
+        try {
+            const res = await fetch(`http://localhost:3000/api/search?q=${encodeURIComponent(query)}`);
+            const result = await res.json();
+            if (result.success && result.data) {
+                searchResultsData = result.data;
+                renderSearchResults();
+                if (searchResultsData.length > 0) {
+                    searchInput.blur(); // Close keyboard
+                    updateFocusSearchGrid(0);
+                } else {
+                    statusElement.innerText = "No se encontraron resultados.";
+                }
+            }
+        } catch (e) {
+            statusElement.innerText = "Error en la búsqueda.";
+        }
+    }
+
+    function renderSearchResults() {
+        searchResultsContainer.innerHTML = '';
+        searchResultsData.forEach((anime, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.backgroundImage = `url('${anime.image}')`;
+            card.innerHTML = `
+                <div class="card-info">
+                    <div class="card-title">${anime.title}</div>
+                </div>
+            `;
+            searchResultsContainer.appendChild(card);
+        });
+        statusElement.innerText = `${searchResultsData.length} resultados encontrados.`;
+    }
+
+    function updateFocusSearchGrid(idx) {
+        if (idx < 0) idx = 0;
+        if (idx >= searchResultsData.length) idx = searchResultsData.length - 1;
+        searchGridIdx = idx;
+
+        const cards = searchResultsContainer.querySelectorAll('.card');
+        cards.forEach((el, i) => {
+            if (i === idx) {
+                el.classList.add('focused');
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                el.classList.remove('focused');
+            }
+        });
+        
+        // When focused on grid, input is not focused
+        if (idx >= 0) searchInput.blur();
     }
 
     // --- ACTION MODAL ---
-    function openActionModal() {
+    function openActionModal(url) {
         currentState = STATES.ACTION_MODAL;
-        targetEpisodeUrl = episodesData[carouselIdx].url;
+        targetEpisodeUrl = url;
         actionModal.classList.remove('hidden');
         updateFocusActionModal(0);
     }
     
     function closeActionModal() {
         actionModal.classList.add('hidden');
-        currentState = STATES.CAROUSEL;
-        updateFocusCarousel(carouselIdx);
+        if (detailsView.classList.contains('hidden')) {
+            if (!searchView.classList.contains('hidden')) {
+                currentState = STATES.SEARCH;
+                updateFocusSearchGrid(searchGridIdx);
+            } else {
+                currentState = STATES.CAROUSEL;
+                updateFocusCarousel(carouselIdx);
+            }
+        }
     }
 
     function updateFocusActionModal(idx) {
@@ -162,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 detailsView.classList.remove('hidden');
-                actionModal.classList.add('hidden'); // Hide the pop up
+                actionModal.classList.add('hidden');
                 currentState = STATES.DETAILS;
                 updateFocusDetails(0);
                 statusElement.innerText = "";
@@ -174,7 +275,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function closeDetailsView() {
         detailsView.classList.add('hidden');
-        closeActionModal(); // Return to carousel
+        if (!searchView.classList.contains('hidden')) {
+            currentState = STATES.SEARCH;
+            updateFocusSearchGrid(searchGridIdx);
+        } else {
+            closeActionModal();
+        }
     }
 
     function updateFocusDetails(idx) {
@@ -186,7 +292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btns.forEach((el, i) => {
             if (i === idx) {
                 el.classList.add('focused');
-                // Scroll into view
                 el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
                 el.classList.remove('focused');
@@ -225,16 +330,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function closeServerModal() {
         serverModal.classList.add('hidden');
-        // Go back to where we came from
         if (!detailsView.classList.contains('hidden')) {
             currentState = STATES.DETAILS;
             updateFocusDetails(detailIdx);
         } else if (!actionModal.classList.contains('hidden')) {
             currentState = STATES.ACTION_MODAL;
             updateFocusActionModal(actionModalIdx);
-        } else {
-            currentState = STATES.CAROUSEL;
-            updateFocusCarousel(carouselIdx);
         }
     }
 
@@ -252,7 +353,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- PLAYER ---
     function openPlayer(serverCode) {
-        // Try to add autoplay parameter if not present
         let videoUrl = serverCode;
         if (videoUrl.includes('?')) {
             if (!videoUrl.includes('autoplay=')) videoUrl += '&autoplay=1';
@@ -268,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function closePlayer() {
         playerOverlay.classList.add('hidden');
         videoFrame.src = "";
-        closeServerModal(); // Close server modal and return to previous state
+        closeServerModal();
     }
 
     // --- KEY HANDLING ---
@@ -279,64 +379,76 @@ document.addEventListener('DOMContentLoaded', async () => {
         const KEY_DOWN = 40;
         const KEY_ENTER = 13;
         const KEY_ESC = 27;
-        const KEY_BACK = 461; // LG Magic Remote Back
+        const KEY_BACK = 461;
 
         const isBack = e.keyCode === KEY_ESC || e.keyCode === KEY_BACK;
 
         switch (currentState) {
             case STATES.CAROUSEL:
-                if (e.keyCode === KEY_LEFT) updateFocusCarousel(carouselIdx - 1);
-                else if (e.keyCode === KEY_RIGHT) updateFocusCarousel(carouselIdx + 1);
-                else if (e.keyCode === KEY_ENTER) openActionModal();
+                if (isHeaderFocused) {
+                    if (e.keyCode === KEY_DOWN) updateFocusCarousel(carouselIdx);
+                    else if (e.keyCode === KEY_ENTER) openSearchView();
+                } else {
+                    if (e.keyCode === KEY_LEFT) updateFocusCarousel(carouselIdx - 1);
+                    else if (e.keyCode === KEY_RIGHT) updateFocusCarousel(carouselIdx + 1);
+                    else if (e.keyCode === KEY_UP) focusHeader();
+                    else if (e.keyCode === KEY_ENTER) openActionModal(episodesData[carouselIdx].url);
+                }
                 break;
                 
-            case STATES.ACTION_MODAL:
+            case STATES.SEARCH:
                 if (isBack) {
                     e.preventDefault();
-                    closeActionModal();
+                    closeSearchView();
+                } else if (e.keyCode === KEY_ENTER) {
+                    if (document.activeElement === searchInput) {
+                        performSearch(searchInput.value);
+                    } else if (searchResultsData.length > 0) {
+                        targetEpisodeUrl = searchResultsData[searchGridIdx].url;
+                        openDetailsView();
+                    }
+                } else if (e.keyCode === KEY_UP) {
+                    if (searchGridIdx < 6) searchInput.focus();
+                    else updateFocusSearchGrid(searchGridIdx - 6);
+                } else if (e.keyCode === KEY_DOWN) {
+                    if (document.activeElement === searchInput) {
+                        if (searchResultsData.length > 0) updateFocusSearchGrid(0);
+                    } else {
+                        updateFocusSearchGrid(searchGridIdx + 6);
+                    }
+                } else if (e.keyCode === KEY_LEFT) {
+                    if (document.activeElement !== searchInput) updateFocusSearchGrid(searchGridIdx - 1);
+                } else if (e.keyCode === KEY_RIGHT) {
+                    if (document.activeElement !== searchInput) updateFocusSearchGrid(searchGridIdx + 1);
                 }
+                break;
+
+            case STATES.ACTION_MODAL:
+                if (isBack) { e.preventDefault(); closeActionModal(); }
                 else if (e.keyCode === KEY_UP) updateFocusActionModal(actionModalIdx - 1);
                 else if (e.keyCode === KEY_DOWN) updateFocusActionModal(actionModalIdx + 1);
                 else if (e.keyCode === KEY_ENTER) {
-                    if (actionModalIdx === 0) {
-                        // Reproducir
-                        openServerModal(targetEpisodeUrl);
-                    } else {
-                        // Más Episodios
-                        openDetailsView();
-                    }
+                    if (actionModalIdx === 0) openServerModal(targetEpisodeUrl);
+                    else openDetailsView();
                 }
                 break;
                 
             case STATES.DETAILS:
-                if (isBack) {
-                    e.preventDefault();
-                    closeDetailsView();
-                }
+                if (isBack) { e.preventDefault(); closeDetailsView(); }
                 else if (e.keyCode === KEY_UP) updateFocusDetails(detailIdx - 1);
                 else if (e.keyCode === KEY_DOWN) updateFocusDetails(detailIdx + 1);
-                else if (e.keyCode === KEY_ENTER) {
-                    openServerModal(detailEpisodesData[detailIdx].url);
-                }
+                else if (e.keyCode === KEY_ENTER) openServerModal(detailEpisodesData[detailIdx].url);
                 break;
                 
             case STATES.SERVER_MODAL:
-                if (isBack) {
-                    e.preventDefault();
-                    closeServerModal();
-                }
+                if (isBack) { e.preventDefault(); closeServerModal(); }
                 else if (e.keyCode === KEY_UP || e.keyCode === KEY_LEFT) updateFocusServer(serverIdx - 1);
                 else if (e.keyCode === KEY_DOWN || e.keyCode === KEY_RIGHT) updateFocusServer(serverIdx + 1);
-                else if (e.keyCode === KEY_ENTER) {
-                    openPlayer(serverButtons[serverIdx].code);
-                }
+                else if (e.keyCode === KEY_ENTER) openPlayer(serverButtons[serverIdx].code);
                 break;
                 
             case STATES.PLAYER:
-                if (isBack) {
-                    e.preventDefault();
-                    closePlayer();
-                }
+                if (isBack) { e.preventDefault(); closePlayer(); }
                 break;
         }
     });
