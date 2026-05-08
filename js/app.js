@@ -252,7 +252,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- PLAYER ---
     function openPlayer(serverCode) {
-        videoFrame.src = serverCode;
+        // Try to add autoplay parameter if not present
+        let videoUrl = serverCode;
+        if (videoUrl.includes('?')) {
+            if (!videoUrl.includes('autoplay=')) videoUrl += '&autoplay=1';
+        } else {
+            videoUrl += '?autoplay=1';
+        }
+
+        videoFrame.src = videoUrl;
         playerOverlay.classList.remove('hidden');
         currentState = STATES.PLAYER;
     }
@@ -283,7 +291,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
                 
             case STATES.ACTION_MODAL:
-                if (isBack) closeActionModal();
+                if (isBack) {
+                    e.preventDefault();
+                    closeActionModal();
+                }
                 else if (e.keyCode === KEY_UP) updateFocusActionModal(actionModalIdx - 1);
                 else if (e.keyCode === KEY_DOWN) updateFocusActionModal(actionModalIdx + 1);
                 else if (e.keyCode === KEY_ENTER) {
@@ -298,7 +309,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
                 
             case STATES.DETAILS:
-                if (isBack) closeDetailsView();
+                if (isBack) {
+                    e.preventDefault();
+                    closeDetailsView();
+                }
                 else if (e.keyCode === KEY_UP) updateFocusDetails(detailIdx - 1);
                 else if (e.keyCode === KEY_DOWN) updateFocusDetails(detailIdx + 1);
                 else if (e.keyCode === KEY_ENTER) {
@@ -307,7 +321,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
                 
             case STATES.SERVER_MODAL:
-                if (isBack) closeServerModal();
+                if (isBack) {
+                    e.preventDefault();
+                    closeServerModal();
+                }
                 else if (e.keyCode === KEY_UP || e.keyCode === KEY_LEFT) updateFocusServer(serverIdx - 1);
                 else if (e.keyCode === KEY_DOWN || e.keyCode === KEY_RIGHT) updateFocusServer(serverIdx + 1);
                 else if (e.keyCode === KEY_ENTER) {
@@ -316,7 +333,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 break;
                 
             case STATES.PLAYER:
-                if (isBack) closePlayer();
+                if (isBack) {
+                    e.preventDefault();
+                    closePlayer();
+                }
                 break;
         }
     });
