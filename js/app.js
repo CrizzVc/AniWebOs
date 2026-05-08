@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 
                 detailsView.classList.remove('hidden');
+                actionModal.classList.add('hidden'); // Hide the pop up
                 currentState = STATES.DETAILS;
                 updateFocusDetails(0);
                 statusElement.innerText = "";
