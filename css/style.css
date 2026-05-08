@@ -243,3 +243,41 @@ button:focus, button.focused {
     font-size: 1.2rem;
     color: var(--text-dim);
 }
+
+/* Video Player Overlay */
+.hidden {
+    display: none !important;
+}
+
+#player-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+}
+
+.player-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 30px;
+    background-color: rgba(0, 0, 0, 0.8);
+    font-size: 1.5rem;
+    color: white;
+}
+
+.player-close {
+    color: var(--text-dim);
+    font-size: 1.2rem;
+}
+
+#video-frame {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    border: none;
+}

@@ -41,6 +41,15 @@
         </main>
         
         <div id="status">Obteniendo datos de AnimeFLV...</div>
+
+        <!-- Video Player Overlay -->
+        <div id="player-overlay" class="hidden">
+            <div class="player-header">
+                <span id="player-title">Reproduciendo...</span>
+                <span class="player-close">Presiona ATRÁS (o ESC) para cerrar</span>
+            </div>
+            <iframe id="video-frame" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
     </div>
     
     <script src="js/app.js"></script>

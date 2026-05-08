@@ -6,6 +6,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const heroTitle = document.getElementById('hero-title');
     const heroSubtitle = document.getElementById('hero-subtitle');
     
+    // Player elements
+    const playerOverlay = document.getElementById('player-overlay');
+    const videoFrame = document.getElementById('video-frame');
+    const playerTitle = document.getElementById('player-title');
+    
     let focusableElements = [];
     let currentIndex = 0;
     
@@ -120,13 +125,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Handle remote control key presses
     document.addEventListener('keydown', (e) => {
-        if (cards.length === 0) return; // Not loaded yet
-        
         const KEY_LEFT = 37;
         const KEY_UP = 38;
         const KEY_RIGHT = 39;
         const KEY_DOWN = 40;
         const KEY_ENTER = 13;
+        const KEY_ESC = 27; // Keyboard ESC
+        const KEY_BACK = 461; // LG Magic Remote Back Button
+
+        // If player is open, intercept Back/Esc to close it
+        if (!playerOverlay.classList.contains('hidden')) {
+            if (e.keyCode === KEY_ESC || e.keyCode === KEY_BACK) {
+                e.preventDefault();
+                closePlayer();
+            }
+            return; // Don't process other navigation keys when player is open
+        }
+
+        if (cards.length === 0) return; // Not loaded yet
 
         switch (e.keyCode) {
             case KEY_LEFT:
@@ -183,15 +199,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await fetch(`http://localhost:3000/api/servers?url=${encodeURIComponent(episodeUrl)}`);
             const json = await res.json();
             if (json.success && json.servers.length > 0) {
-                const firstServer = json.servers[0];
-                statusElement.innerText = `Reproduciendo en servidor: ${firstServer.title}`;
-                console.log("SERVER URL:", firstServer.code);
-                // Redirect or open iframe here
+                // Find a good server, try to find 'mega' or 'okru' or just use the first one
+                let selectedServer = json.servers.find(s => s.server === 'mega' || s.server === 'okru') || json.servers[0];
+                
+                statusElement.innerText = `Reproduciendo en servidor: ${selectedServer.title}`;
+                openPlayer(episodesData[currentColumn].title + " " + episodesData[currentColumn].episode, selectedServer.code);
             } else {
                 statusElement.innerText = "No se encontraron reproductores.";
             }
         } catch (e) {
             statusElement.innerText = "Error buscando reproductores.";
         }
+    }
+
+    function openPlayer(title, videoUrl) {
+        playerTitle.innerText = `Reproduciendo: ${title}`;
+        videoFrame.src = videoUrl;
+        playerOverlay.classList.remove('hidden');
+    }
+
+    function closePlayer() {
+        playerOverlay.classList.add('hidden');
+        videoFrame.src = ""; // Stop playing audio/video
+        statusElement.innerText = "Reproductor cerrado.";
+        setTimeout(() => statusElement.innerText = "", 2000);
     }
 });
