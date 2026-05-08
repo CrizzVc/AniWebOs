@@ -1,13 +1,13 @@
 {
-  "id": "com.crizzvc.aniwebos",
+  "id": "com.crizzvc.animeos",
   "version": "1.0.0",
   "vendor": "CrizzVc",
   "type": "web",
   "main": "index.html",
-  "title": "AniWebOs",
+  "title": "AnimeWB",
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
   "bgColor": "#111111",
   "resolution": "1920x1080",
-  "appDescription": "Aplicación de AniWebOs para webOS TV"
+  "appDescription": "Aplicación de AnimeWB para webOS TV"
 }
