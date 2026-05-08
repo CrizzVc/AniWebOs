@@ -412,7 +412,7 @@ button.focused {
 
 .fav-heart-btn {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     background: rgba(0, 0, 0, 0.7);
     border: none;
@@ -422,18 +422,16 @@ button.focused {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: white !important;
+    font-size: 45px; /* Size for the heart entity */
     transition: all 0.3s;
     backdrop-filter: blur(10px);
-    z-index: 10;
-}
-
-.fav-heart-btn svg {
-    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+    z-index: 100;
+    line-height: 1;
 }
 
 .fav-heart-btn.active {
-    color: #ff3366;
+    color: #ff3366 !important;
 }
 
 .fav-heart-btn.focused {
