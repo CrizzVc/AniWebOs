@@ -35,10 +35,17 @@
                 <!-- Botones eliminados, ahora salen en el modal de acción -->
             </div>
 
-            <div class="carousel-container">
+            <div class="carousel-container" id="latest-carousel-container">
                 <h2 class="section-title">Últimos Episodios</h2>
                 <div class="carousel-wrapper">
                     <div id="carousel" class="carousel"></div>
+                </div>
+            </div>
+
+            <div class="carousel-container" id="fav-carousel-container">
+                <h2 class="section-title">Mis Favoritos</h2>
+                <div class="carousel-wrapper">
+                    <div id="carousel-fav" class="carousel"></div>
                 </div>
             </div>
         </main>
@@ -63,7 +70,14 @@
     <div id="details-view" class="view-overlay hidden">
         <div class="details-content">
             <div class="details-left">
-                <img id="details-cover" src="" alt="Cover">
+                <div class="cover-wrapper">
+                    <img id="details-cover" src="" alt="Cover">
+                    <button id="btn-detail-fav" class="fav-heart-btn detail-focusable">
+                        <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="details-right">
                 <h1 id="details-title">Título del Anime</h1>

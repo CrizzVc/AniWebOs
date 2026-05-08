@@ -176,6 +176,11 @@ button.focused {
 /* Carousel */
 .carousel-container {
     width: 100%;
+    margin-bottom: 40px;
+}
+
+.carousel-container.hidden {
+    display: none !important;
 }
 
 .section-title {
@@ -201,14 +206,14 @@ button.focused {
 
 /* Cards */
 .card {
-    min-width: var(--card-width);
-    height: var(--card-height);
-    border-radius: 12px;
-    background-color: #222;
+    flex: 0 0 300px;
+    height: 180px;
     background-size: cover;
     background-position: center;
+    border-radius: 15px;
     position: relative;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s;
+    overflow: hidden;
+    transition: all 0.3s ease-out, box-shadow 0.2s ease-out, border-color 0.2s;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     /* For focus logic */
     display: flex;
@@ -386,13 +391,56 @@ button.focused {
 }
 
 .details-left {
-    flex: 0 0 400px;
+    flex: 0 0 450px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.cover-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
 }
 
 #details-cover {
     width: 100%;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    display: block;
+}
+
+.fav-heart-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.fav-heart-btn svg {
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
+}
+
+.fav-heart-btn.active {
+    color: #ff3366;
+}
+
+.fav-heart-btn.focused {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 30px rgba(255, 51, 102, 0.6);
 }
 
 .details-right {
